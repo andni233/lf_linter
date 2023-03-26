@@ -1,7 +1,12 @@
 [package]
 name = "lf_lint"
+description = "Linter that checks that all files in <PATH> ends with a newline."
 version = "0.1.0"
 edition = "2021"
+authors = ["andni233@gmail.com"]
+homepage = "https://github.com/andni233/lf_linter"
+repository = "https://github.com/andni233/lf_linter"
+license = "MIT"
 
 [dependencies]
 clap = { version = "4.1.13", features = ["derive"] }
