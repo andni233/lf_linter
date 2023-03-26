@@ -1,6 +1,6 @@
 # lf_lint
 
-Linter that checks that all files in <PATH> ends with a newline.
+Linter that checks that all files in PATH ends with a newline.
 Optionally adds a newline where missing.
 
 ```
