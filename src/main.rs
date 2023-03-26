@@ -85,13 +85,12 @@ impl LintTarget {
     }
 
     fn add_newline(&self) {
-        let mut f = OpenOptions::new()
+        let f = OpenOptions::new()
             .write(true)
             .open(self.entry.path())
             .unwrap();
         let len = f.metadata().unwrap().len();
 
-        f.seek(SeekFrom::Start(len)).unwrap();
         if self.is_crlf() {
             f.write_all_at(b"\r\n", len).unwrap();
         } else {
