@@ -1,0 +1,10 @@
+[package]
+name = "lf_lint"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+clap = { version = "4.1.13", features = ["derive"] }
+content_inspector = "0.2.4"
+rayon = "1.7.0"
+walkdir = "2.3.3"
