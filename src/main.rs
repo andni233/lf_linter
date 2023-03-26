@@ -1,7 +1,8 @@
 use clap::Parser;
 use content_inspector::inspect;
+use glob::Pattern;
 use rayon::prelude::*;
-use std::fs::OpenOptions;
+use std::fs::{self, OpenOptions};
 use std::io::{Read, Seek, SeekFrom};
 use std::os::unix::prelude::FileExt;
 use std::process::ExitCode;
@@ -19,6 +20,10 @@ struct Args {
     /// Add new line at EOF if missing
     #[arg(short, long)]
     fix: bool,
+
+    /// Rust Patterns for paths to exclude
+    #[arg(short, long, value_parser, required = false)]
+    exclude: Vec<Pattern>,
 }
 
 struct LintTarget {
@@ -80,7 +85,10 @@ impl LintTarget {
     }
 
     fn add_newline(&self) {
-        let mut f = OpenOptions::new().write(true).open(self.entry.path()).unwrap();
+        let mut f = OpenOptions::new()
+            .write(true)
+            .open(self.entry.path())
+            .unwrap();
         let len = f.metadata().unwrap().len();
 
         f.seek(SeekFrom::Start(len)).unwrap();
@@ -95,13 +103,19 @@ impl LintTarget {
 fn main() -> ExitCode {
     let args = Args::parse();
 
-    let lint_targets_missing_newline: Vec<LintTarget> = WalkDir::new(args.path)
-        .into_iter()
-        .par_bridge()
-        .filter_map(|t| t.ok())
-        .filter_map(LintTarget::new)
-        .filter(|t| !t.is_binary() && !t.ends_with_newline())
-        .collect();
+    let lint_targets_missing_newline: Vec<LintTarget> =
+        WalkDir::new(fs::canonicalize(args.path).unwrap())
+            .into_iter()
+            .filter_entry(|e| {
+                (&args.exclude)
+                    .into_iter()
+                    .all(|pattern| !pattern.matches_path(e.path()))
+            })
+            .par_bridge()
+            .filter_map(|e| e.ok())
+            .filter_map(LintTarget::new)
+            .filter(|t| !t.is_binary() && !t.ends_with_newline())
+            .collect();
 
     if !args.fix {
         if !lint_targets_missing_newline.is_empty() {
@@ -115,7 +129,9 @@ fn main() -> ExitCode {
             return ExitCode::FAILURE;
         }
     } else {
-        lint_targets_missing_newline.into_par_iter().for_each(|t| t.add_newline())
+        lint_targets_missing_newline
+            .into_par_iter()
+            .for_each(|t| t.add_newline())
     }
 
     ExitCode::SUCCESS
