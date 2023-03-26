@@ -21,7 +21,7 @@ struct Args {
     #[arg(short, long)]
     fix: bool,
 
-    /// Rust Patterns for paths to exclude
+    /// Rust `glob::Pattern`s for paths to exclude
     #[arg(short, long, value_parser, required = false)]
     exclude: Vec<Pattern>,
 }
